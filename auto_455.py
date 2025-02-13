@@ -2,7 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.edge.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
 import pandas as pd
@@ -55,11 +55,17 @@ try:
     # Muda o foco para a última aba (a nova aba)
     driver.switch_to.window(abas[-1])
 
-    data_atual = datetime.now().strftime('%d%m%y')
+    # Cria uma instância de ActionChains
+    actions = ActionChains(driver)
 
-    driver.find_element(By.NAME, "f12").clear()
-    time.sleep(0.3)
-    driver.find_element(By.NAME, "f12").send_keys(data_atual)
+    data_atual = datetime.now().strftime('%d%m%y')
+    hora_atual = datetime.now().strftime('%H:%M:%S')
+
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "f12")))
+    input_element = driver.find_element(By.ID, "12")
+    driver.execute_script("arguments[0].value = '';", input_element)
+    time.sleep(3)
+    driver.find_element(By.ID, "12").send_keys(data_atual)
     time.sleep(0.3)
     driver.find_element(By.NAME, "f21").clear()
     time.sleep(0.3)
@@ -69,24 +75,29 @@ try:
     time.sleep(0.3)
     driver.find_element(By.NAME, "f35").send_keys("e")
     time.sleep(0.3)
-    driver.find_element(By.NAME, "f37").clear()
-    time.sleep(0.3)
+    input_element = driver.find_element(By.NAME, "f37")
+    driver.execute_script("arguments[0].value = '';", input_element)
     driver.find_element(By.NAME, "f37").send_keys("g")
     time.sleep(0.3)
     driver.find_element(By.NAME, "f38").send_keys("h")
 
     login_button = driver.find_element(By.ID, "40")
     driver.execute_script("arguments[0].click();", login_button)
-    time.sleep(0.5)
+    
 
-    driver.find_element(By.NAME, "-1").send_keys(1)
+    time.sleep(1)
 
-    time.sleep(5)
+    actions.send_keys("1").perform()
+
+    time.sleep(12)
+
+    hora_clique = hora_atual
+    print(hora_clique)
 
     abas = driver.window_handles  # Lista o número de abas abertas.
 
     # Muda o foco para a última aba (a nova aba)
-    driver.switch_to.window(abas[-2])
+    driver.switch_to.window(abas[-1])
 
     time.sleep(10)
 
