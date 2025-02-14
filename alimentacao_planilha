@@ -1,0 +1,54 @@
+import os
+import pandas as pd
+import pyautogui
+import time
+
+# Caminho para a pasta de downloads
+download_folder = os.path.expanduser('G:\\.shortcut-targets-by-id\\1BbEijfOOPBwgJuz8LJhqn9OtOIAaEdeO\\Logdi\\Relatório e Dashboards\\teste_auto_19')
+
+# Função para encontrar o último arquivo .sswweb
+def encontrar_ultimo_arquivo_swwweb(pasta):
+    arquivos = [os.path.join(pasta, f) for f in os.listdir(pasta) if os.path.isfile(os.path.join(pasta, f))]
+    arquivos = [f for f in arquivos if f.endswith('.sswweb')]
+    return max(arquivos, key=os.path.getctime) if arquivos else None
+
+# Função para processar o arquivo .sswweb
+def processar_arquivo_swwweb(download_folder, planilha_destino):
+    ultimo_arquivo = encontrar_ultimo_arquivo_swwweb(download_folder)
+
+    if ultimo_arquivo:
+        print(f"Último arquivo encontrado: {ultimo_arquivo}")
+        os.startfile(ultimo_arquivo)  # Abre o arquivo
+
+        # Aguarda um tempo para garantir que o arquivo seja aberto
+        time.sleep(5)  # Ajuste o tempo conforme necessário
+
+        # Simula a seleção e cópia dos dados
+        pyautogui.hotkey('ctrl', 'a')  # Seleciona tudo
+        time.sleep(1)  # Aguarda um segundo
+        pyautogui.hotkey('ctrl', 'c')  # Copia os dados
+
+        # Aguarda um tempo para garantir que os dados sejam copiados
+        time.sleep(1)
+
+        # Lê a planilha de destino
+        if os.path.exists(planilha_destino):
+            planilha_destino_dados = pd.read_excel(planilha_destino)
+        else:
+            planilha_destino_dados = pd.DataFrame()  # Cria um DataFrame vazio se a planilha não existir
+
+        # Adiciona os dados copiados à planilha de destino
+        dados_copiados = pd.read_clipboard()
+        planilha_destino_dados = planilha_destino_dados.append(dados_copiados, ignore_index=True)
+
+        # Salva os dados na planilha de destino
+        planilha_destino_dados.to_excel(planilha_destino, index=False)
+        print(f"Dados copiados para a planilha: {planilha_destino}")
+    else:
+        print("Nenhum arquivo .sswweb encontrado na pasta de downloads.")
+
+# Caminho para a planilha de destino
+planilha_destino = os.path.join(download_folder, "dados_final.xlsx")
+
+# Chama a função para processar o arquivo
+processar_arquivo_swwweb(download_folder, planilha_destino)
