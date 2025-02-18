@@ -2,7 +2,6 @@ import os
 import pandas as pd
 import pyautogui
 import time
-import subprocess
 from pywinauto import Application
 
 # Caminho para a pasta de downloads
@@ -28,31 +27,15 @@ def processar_arquivo_swwweb(download_folder, planilha_destino):
         # Remove as duas primeiras linhas
         linhas = linhas[2:]
 
+        # Remove a última linha
+        linhas = linhas[:-1]  # Usando slicing para remover a última linha
+
         # Grava o conteúdo de volta no arquivo
         with open(ultimo_arquivo, 'w') as file:
             file.writelines(linhas)
 
-        # Abre o arquivo no Bloco de Notas
-        subprocess.Popen(['notepad.exe', ultimo_arquivo])  # Força a abertura no Bloco de Notas
-
-        # Aguarda um tempo para garantir que o arquivo seja aberto
-        time.sleep(5)  # Ajuste o tempo conforme necessário
-
-        # Copia todos os dados restantes do Bloco de Notas
-        pyautogui.hotkey('ctrl', 'a')  # Seleciona tudo
-        time.sleep(1)
-        pyautogui.hotkey('ctrl', 'c')  # Copia os dados
-
-        # Aguarda um tempo para garantir que os dados sejam copiados
-        time.sleep(1)
-
-        # Abre a planilha de destino no Excel
-        if not os.path.exists(planilha_destino):
-            # Cria um DataFrame vazio e salva como um novo arquivo Excel
-            pd.DataFrame().to_excel(planilha_destino, index=False)
-            print(f"Planilha criada: {planilha_destino}")
-
-        os.startfile(planilha_destino)
+        # Abre o arquivo no Excel
+        os.startfile(ultimo_arquivo)  # Força a abertura no Excel
         time.sleep(10)  # Aumenta o tempo de espera para garantir que o Excel esteja aberto
 
         # Foca na janela do Excel usando pywinauto
@@ -63,15 +46,52 @@ def processar_arquivo_swwweb(download_folder, planilha_destino):
         # Aguarda um tempo para garantir que o Excel esteja em foco
         time.sleep(1)
 
+        # Seleciona todas as células usando pywinauto
+        excel_window.type_keys('^{HOME}', with_spaces=True)  # Move para a célula A1
+        time.sleep(1)
+        excel_window.type_keys('^+{DOWN}')  # Seleciona até a última linha preenchida
+        time.sleep(1)
+        for _ in range(6):  # Ajuste o número conforme necessário
+            excel_window.type_keys('^+{RIGHT}')
+        time.sleep(1)
+        # Copia todos os dados restantes do Excel
+        pyautogui.hotkey('ctrl', 'c')  # Copia os dados
+
+        # Aguarda um tempo para garantir que os dados sejam copiados
+        time.sleep(1)
+        # Fecha a planilha do Excel
+        pyautogui.hotkey('alt', 'f4')
+        time.sleep(1)
+        pyautogui.hotkey('enter')
+        time.sleep(1.5)
+
+        # Abre a planilha de destino no Excel
+        if not os.path.exists(planilha_destino):
+            # Cria um DataFrame vazio e salva como um novo arquivo Excel
+            pd.DataFrame().to_excel(planilha_destino, index=False)
+            print(f"Planilha criada: {planilha_destino}")
+
+        os.startfile(planilha_destino)
+        time.sleep(10)  # Aumenta o tempo de espera para garantir que o Excel esteja aberto
+
+                # Foca na janela do Excel usando pywinauto
+        app = Application().connect(title_re=".*Excel.*")  # Conecta à janela do Excel
+        excel_window = app.top_window()  # Obtém a janela principal do Excel
+        excel_window.set_focus()  # Define o foco na janela do Excel
+
+        # Aguarda um tempo para garantir que o Excel esteja em foco
+        time.sleep(1)
+
         # Lê a planilha de destino
         planilha_destino_dados = pd.read_excel(planilha_destino)
 
-        # Encontra a última linha preenchida na planilha de destino
-        ultima_linha = len(planilha_destino_dados)
-
-        # Clica na primeira coluna da próxima linha
-        excel_window.type_keys(f"A{ultima_linha + 1}", with_spaces=True)  # Move para a célula da primeira coluna da próxima linha
-        time.sleep(1)  # Aguarda um momento para garantir que a célula esteja focada
+        #Seleciona a última linha preenchida
+        excel_window.type_keys('^{HOME}', with_spaces=True)  # Move para a célula A1
+        time.sleep(1)
+        excel_window.type_keys('^{DOWN}', with_spaces=True)
+        time.sleep(1)
+        pyautogui.hotkey('down')
+        time.sleep(1)
 
         # Cola os dados copiados na célula selecionada
         pyautogui.hotkey('ctrl', 'v')  # Cola os dados
@@ -79,8 +99,11 @@ def processar_arquivo_swwweb(download_folder, planilha_destino):
         # Aguarda um tempo para garantir que os dados sejam colados
         time.sleep(1)
 
-        # Salva os dados na planilha de destino
-        planilha_destino_dados.to_excel(planilha_destino, index=False)
+        pyautogui.hotkey('ctrl', 's')
+        time.sleep(2)
+        pyautogui.hotkey('alt', 'f4')
+        time.sleep(1)
+
         print(f"Dados copiados para a planilha: {planilha_destino}")
     else:
         print("Nenhum arquivo .sswweb encontrado na pasta de downloads.")
@@ -88,5 +111,7 @@ def processar_arquivo_swwweb(download_folder, planilha_destino):
 # Caminho para a planilha de destino
 planilha_destino = os.path.join(download_folder, "dados_copiados.xlsx")
 
-# Chama a função para processar o arquivo
-processar_arquivo_swwweb(download_folder, planilha_destino)
+# Bloco para garantir que o código só execute ao ser chamado diretamente
+if __name__ == "__main__":
+    # Chama a função para processar o arquivo
+    processar_arquivo_swwweb(download_folder, planilha_destino)
